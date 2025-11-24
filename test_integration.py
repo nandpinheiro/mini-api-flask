@@ -49,7 +49,7 @@ def test_02_exchange_usd_to_brl_integration():
         pytest.fail(f"❌ Falha HTTP da AwesomeAPI ou da sua API (Status: {e.response.status_code}).")
     except requests.exceptions.ConnectionError:
         # CORREÇÃO DE SINTAXE (Removendo o \n da f-string)
-        pytest.fail(f"❌ ERRO: Servidor Flask não está rodando. Inicie com 'python src/app.py'.")
+        pytest.fail("❌ ERRO: Servidor Flask não está rodando. Inicie com 'python src/app.py'.")
 
 def test_03_create_new_user_integration():
     """Testa a criação de um novo usuário via POST."""
@@ -100,7 +100,7 @@ def test_04_get_user_by_id_integration():
         print("✅ Busca por ID (Existente) OK.")
 
     except requests.exceptions.ConnectionError:
-        pytest.fail(f"❌ ERRO: Servidor Flask não está rodando.")
+        pytest.fail("❌ ERRO: Servidor Flask não está rodando.")
     
     # Teste 4.2: Falha (Buscando um ID que não existe)
     user_id_fail = 99999
@@ -116,7 +116,7 @@ def test_04_get_user_by_id_integration():
         print("✅ Busca por ID (Não Existente) OK (Retornou 404).")
 
     except requests.exceptions.ConnectionError:
-        pytest.fail(f"❌ ERRO: Servidor Flask não está rodando.")
+        pytest.fail("❌ ERRO: Servidor Flask não está rodando.")
 
 
 def test_05_delete_user_integration():
@@ -140,7 +140,7 @@ def test_05_delete_user_integration():
         print("✅ Usuário deletado com sucesso (Status 204).")
 
     except requests.exceptions.ConnectionError:
-        pytest.fail(f"❌ ERRO: Servidor Flask não está rodando.")
+        pytest.fail("❌ ERRO: Servidor Flask não está rodando.")
     
     # 2. Testa se o usuário realmente sumiu (Verificação de 404)
     endpoint_check = f"{BASE_URL}/users/{user_id_to_delete}"
@@ -157,6 +157,6 @@ def test_05_delete_user_integration():
         print("✅ Verificação de exclusão OK (Retornou 404).")
 
     except requests.exceptions.ConnectionError:
-        pytest.fail(f"❌ ERRO: Servidor Flask não está rodando.")
+        pytest.fail("❌ ERRO: Servidor Flask não está rodando.")
     except Exception as e:
         pytest.fail(f"❌ Falha no teste DELETE/Verificação: {e}")
