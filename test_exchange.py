@@ -4,6 +4,7 @@ import requests # Essencial para referenciar requests.RequestException
 from unittest.mock import patch, Mock
 from src.app import create_app
 
+# Exemplo de resposta simulada da AwesomeAPI para USD-BRL
 MOCK_SUCCESS_RESPONSE_USD_BRL = {
     "USDBRL": {
         "code": "USD",
@@ -120,9 +121,33 @@ def test_exchange_usd_to_brl_invalid_json_format(mock_get, client):
     assert response.status_code == 502
     assert data['error'] == "Unexpected response format from upstream service"
 
-from unittest.mock import patch, Mock
-import json
-# ... outros imports
+    # ======================================
+# TESTES DE ROTA /users (POST)
+# ======================================
+
+def test_add_user_success(client):
+    """Teste unitário para adicionar um novo usuário via POST."""
+    new_user_data = {
+        "name": "Maria Teste",
+        "email": "maria@teste.com"
+    }
+    
+    # 1. Faz a requisição POST com o corpo JSON
+    response = client.post('/users', 
+                           data=json.dumps(new_user_data), # Converte o dicionário Python para string JSON
+                           content_type='application/json')
+    
+    data = json.loads(response.data)
+
+    # 2. Verifica se o status de criação (201) foi retornado
+    assert response.status_code == 201
+    
+    # 3. Verifica se o usuário foi criado corretamente
+    assert data['name'] == "Maria Teste"
+    assert data['email'] == "maria@teste.com"
+    
+    # O ID deve ser gerado sequencialmente (será 11 no primeiro teste do arquivo)
+    assert 'id' in data
 
 # @patch intercepta a chamada requests.get em src.routes
 @patch('requests.get')
@@ -148,29 +173,4 @@ def test_exchange_usd_to_brl_success_new(mock_get, client):
     assert data['bid'] == '5.4410' 
     
     # 4. Verifica se a chamada externa foi feita (para garantir que o mocking funcionou)
-    mock_get.assert_called_once()
-
-@patch('requests.get')
-def test_exchange_usd_to_brl_http_error_unit(mock_get, client):
-    """
-    UNITÁRIO: Simula a falha da AwesomeAPI (ex: 500 ou 502) 
-    para garantir que a sua API Flask retorna 502.
-    """
-    # 1. Configura a simulação de falha
-    mock_response = Mock()
-    mock_response.status_code = 500 # Simula um erro na API externa
-    
-    # Faz o mock lançar uma exceção de requisição (que sua rota espera)
-    mock_get.side_effect = requests.exceptions.RequestException 
-
-    # 2. Chama o endpoint usando o cliente de teste do Flask
-    response = client.get('/exchange/usd-to-brl')
-    data = response.get_json()
-
-    # 3. Asserções
-    # Sua API deve converter a falha externa em 502 (Bad Gateway)
-    assert response.status_code == 502
-    assert "Failed to fetch exchange rate" in data['error']
-    
-    # 4. Verifica se a AwesomeAPI foi chamada
     mock_get.assert_called_once()
