@@ -2,6 +2,7 @@ import requests
 import pytest
 import time
 import json
+import random # Importado para gerar dados aleatórios
 
 BASE_URL = "http://127.0.0.1:5000"
 TIMEOUT = 5
@@ -19,40 +20,43 @@ def test_01_api_is_running_and_users_endpoint():
 
         assert response_users.status_code == 200
         assert isinstance(data, list)
-        assert len(data) == 10
+        
+        # CORREÇÃO: Usamos >= 10 para que o teste não quebre se novos usuários forem criados
+        assert len(data) >= 10 
         
     except requests.exceptions.ConnectionError:
         pytest.fail(f"\n❌ ERRO DE CONEXÃO. O servidor NÃO ESTÁ RODANDO em {BASE_URL}. Inicie-o com 'python src/app.py'.")
 
 def test_02_exchange_usd_to_brl_integration():
-    """Testa a chamada em tempo real à AwesomeAPI (Integração Externa)."""
+    """Testa a chamada em tempo real à AwesomeAPI."""
     endpoint = f"{BASE_URL}/exchange/usd-to-brl"
     
-    # Adiciona um pequeno delay para ser educado com a AwesomeAPI
     time.sleep(1) 
     
     try:
         response = requests.get(endpoint, timeout=TIMEOUT)
-        response.raise_for_status() # Lança exceção se for 4xx/5xx
+        response.raise_for_status()
 
         assert response.status_code == 200
         data = response.json()
         
-        # Verifica se o valor de 'bid' é um número (float) válido (maior que 1.0)
         assert float(data['bid']) > 1.0
         assert data['source'] == 'AwesomeAPI'
 
     except requests.exceptions.HTTPError as e:
-        pytest.fail(f"❌ Falha HTTP da AwesomeAPI ou da sua API (Status: {e.response.status_code}).")
+        pytest.fail(f"❌ Falha HTTP: {e.response.status_code}")
     except requests.exceptions.ConnectionError:
-        pytest.fail(f"\n❌ ERRO: Servidor Flask não está rodando. Inicie com 'python src/app.py'.")
+        pytest.fail(f"\n❌ ERRO: Servidor Flask não está rodando.")
 
 def test_03_create_new_user_integration():
     """Testa a criação de um novo usuário via POST."""
     endpoint = f"{BASE_URL}/users"
+    
+    # CORREÇÃO: Gera um e-mail único para evitar conflitos em execuções repetidas
+    unique_id = int(time.time())
     new_user_data = {
-        "name": "Integracao Teste",
-        "email": "integracao@teste.com"
+        "name": f"Integracao Teste {unique_id}",
+        "email": f"integracao_{unique_id}@teste.com"
     }
     print(f"\nTestando endpoint POST: {endpoint}")
 
@@ -60,56 +64,50 @@ def test_03_create_new_user_integration():
         response = requests.post(endpoint, json=new_user_data, timeout=TIMEOUT)
         response.raise_for_status() 
 
-        assert response.status_code == 201 # HTTP 201 Created
+        assert response.status_code == 201
         data = response.json()
         
-        # Verifica a estrutura básica e os dados enviados
         assert data['name'] == new_user_data['name']
         assert data['email'] == new_user_data['email']
-        assert 'id' in data # Verifica se o ID foi gerado
+        assert 'id' in data
         print("✅ Criação de usuário via POST OK.")
 
     except requests.exceptions.ConnectionError:
-        pytest.fail(f"\n❌ ERRO: Servidor Flask não está rodando em {BASE_URL}. Inicie-o com 'python src/app.py'.")
+        pytest.fail(f"\n❌ ERRO: Servidor Flask não está rodando.")
     except Exception as e:
         pytest.fail(f"❌ Falha no teste POST: {e}")
 
-
 def test_04_get_user_by_id_integration():
-    """Testa a busca de usuário por ID (sucesso e falha)."""
+    """Testa a busca de usuário por ID."""
     
-    # Teste 4.1: Sucesso (Buscando o usuário de ID 1, que deve existir)
+    # Teste 4.1: Sucesso
+    # Assume que o ID 1 sempre existe (o 'Fernando' dos dados iniciais)
     user_id_success = 1
     endpoint_success = f"{BASE_URL}/users/{user_id_success}"
-    print(f"\nTestando endpoint GET: {endpoint_success}")
 
     try:
         response_success = requests.get(endpoint_success, timeout=TIMEOUT)
         response_success.raise_for_status()
-        
         data_success = response_success.json()
         
         assert response_success.status_code == 200
         assert data_success['id'] == user_id_success
-        assert data_success['name'] == 'Fernando' # Primeiro usuário na lista
-        print("✅ Busca por ID (Existente) OK.")
+        # Removemos a verificação do nome 'Fernando' se houver risco de edição, 
+        # mas para este exercício pode manter.
+        assert data_success['name'] == 'Fernando' 
 
     except requests.exceptions.ConnectionError:
         pytest.fail("❌ ERRO: Servidor Flask não está rodando.")
     
-    # Teste 4.2: Falha (Buscando um ID que não existe)
-    user_id_fail = 999
+    # Teste 4.2: Falha
+    user_id_fail = 99999 # Um número bem alto para garantir que não existe
     endpoint_fail = f"{BASE_URL}/users/{user_id_fail}"
-    print(f"Testando endpoint GET: {endpoint_fail} (404)")
 
     try:
         response_fail = requests.get(endpoint_fail, timeout=TIMEOUT)
-        
-        assert response_fail.status_code == 404 # Espera-se 404 Not Found
+        assert response_fail.status_code == 404
         data_fail = response_fail.json()
-        
         assert "User not found" in data_fail['error']
-        print("✅ Busca por ID (Não Existente) OK (Retornou 404).")
 
     except requests.exceptions.ConnectionError:
         pytest.fail("❌ ERRO: Servidor Flask não está rodando.")
