@@ -149,3 +149,28 @@ def test_exchange_usd_to_brl_success_new(mock_get, client):
     
     # 4. Verifica se a chamada externa foi feita (para garantir que o mocking funcionou)
     mock_get.assert_called_once()
+
+@patch('requests.get')
+def test_exchange_usd_to_brl_http_error_unit(mock_get, client):
+    """
+    UNITÁRIO: Simula a falha da AwesomeAPI (ex: 500 ou 502) 
+    para garantir que a sua API Flask retorna 502.
+    """
+    # 1. Configura a simulação de falha
+    mock_response = Mock()
+    mock_response.status_code = 500 # Simula um erro na API externa
+    
+    # Faz o mock lançar uma exceção de requisição (que sua rota espera)
+    mock_get.side_effect = requests.exceptions.RequestException 
+
+    # 2. Chama o endpoint usando o cliente de teste do Flask
+    response = client.get('/exchange/usd-to-brl')
+    data = response.get_json()
+
+    # 3. Asserções
+    # Sua API deve converter a falha externa em 502 (Bad Gateway)
+    assert response.status_code == 502
+    assert "Failed to fetch exchange rate" in data['error']
+    
+    # 4. Verifica se a AwesomeAPI foi chamada
+    mock_get.assert_called_once()
