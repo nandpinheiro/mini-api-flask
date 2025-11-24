@@ -48,6 +48,8 @@ def test_02_exchange_usd_to_brl_integration():
     except requests.exceptions.ConnectionError:
         pytest.fail(f"\n❌ ERRO: Servidor Flask não está rodando.")
 
+# ... (imports existentes: requests, pytest, BASE_URL, TIMEOUT)
+
 def test_03_create_new_user_integration():
     """
     INTEGRAÇÃO: Testa a criação de um novo usuário via POST.
