@@ -121,7 +121,7 @@ def test_exchange_usd_to_brl_invalid_json_format(mock_get, client):
     assert response.status_code == 502
     assert data['error'] == "Unexpected response format from upstream service"
 
-    # ======================================
+# ======================================
 # TESTES DE ROTA /users (POST)
 # ======================================
 
@@ -148,6 +148,30 @@ def test_add_user_success(client):
     
     # O ID deve ser gerado sequencialmente (será 11 no primeiro teste do arquivo)
     assert 'id' in data
+
+def test_add_user_invalid_data(client):
+    """Teste unitário para falha ao adicionar usuário com dados inválidos/ausentes."""
+    # Simula a falta do campo 'email'
+    invalid_user_data = {
+        "name": "Teste Invalido"
+        # 'email' está faltando
+    }
+    
+    # 1. Faz a requisição POST com o corpo JSON inválido
+    response = client.post('/users', 
+                           data=json.dumps(invalid_user_data),
+                           content_type='application/json')
+    
+    data = json.loads(response.data)
+
+    # 2. Verifica se o status de erro (400 Bad Request) foi retornado
+    assert response.status_code == 400
+    
+    # 3. Verifica se a mensagem de erro é clara (depende de como seu Flask trata isso)
+    # Assumimos que sua API retorna um JSON com a chave 'error'
+    assert 'error' in data
+    assert "Missing required fields" in data['error'] or "Invalid data format" in data['error']
+
 
 # @patch intercepta a chamada requests.get em src.routes
 @patch('requests.get')
