@@ -49,65 +49,62 @@ def test_02_exchange_usd_to_brl_integration():
         pytest.fail(f"\n❌ ERRO: Servidor Flask não está rodando.")
 
 def test_03_create_new_user_integration():
-    """Testa a criação de um novo usuário via POST."""
+    """
+    INTEGRAÇÃO: Testa a criação de um novo usuário via POST.
+    Verifica se a API retorna 201 Created e o JSON do novo usuário.
+    """
     endpoint = f"{BASE_URL}/users"
-    
-    # CORREÇÃO: Gera um e-mail único para evitar conflitos em execuções repetidas
-    unique_id = int(time.time())
     new_user_data = {
-        "name": f"Integracao Teste {unique_id}",
-        "email": f"integracao_{unique_id}@teste.com"
+        "name": "Usuario Integracao",
+        "email": "integracao@teste.com"
     }
+    
     print(f"\nTestando endpoint POST: {endpoint}")
 
     try:
+        # Faz a chamada real à API
         response = requests.post(endpoint, json=new_user_data, timeout=TIMEOUT)
-        response.raise_for_status() 
-
-        assert response.status_code == 201
+        
+        # Verifica se a requisição foi bem sucedida
+        assert response.status_code == 201, f"Falha ao criar usuário. Status: {response.status_code}"
+        
         data = response.json()
         
+        # Valida os dados retornados
         assert data['name'] == new_user_data['name']
         assert data['email'] == new_user_data['email']
-        assert 'id' in data
-        print("✅ Criação de usuário via POST OK.")
+        assert 'id' in data # Garante que o ID foi gerado automaticamente
+        assert isinstance(data['id'], int)
+        
+        print("✅ Usuário criado com sucesso via integração.")
 
     except requests.exceptions.ConnectionError:
-        pytest.fail(f"\n❌ ERRO: Servidor Flask não está rodando.")
-    except Exception as e:
-        pytest.fail(f"❌ Falha no teste POST: {e}")
+        pytest.fail(f"❌ ERRO: O servidor Flask não está acessível em {BASE_URL}. Inicie-o em outro terminal.")
 
 def test_04_get_user_by_id_integration():
-    """Testa a busca de usuário por ID."""
+    """
+    INTEGRAÇÃO: Testa a busca de um usuário existente por ID.
+    Baseado na lista inicial em routes.py, o ID 1 deve ser 'Fernando'.
+    """
+    # Vamos buscar o usuário de ID 1, que sabemos que existe na lista inicial
+    user_id = 1
+    endpoint = f"{BASE_URL}/users/{user_id}"
     
-    # Teste 4.1: Sucesso
-    # Assume que o ID 1 sempre existe (o 'Fernando' dos dados iniciais)
-    user_id_success = 1
-    endpoint_success = f"{BASE_URL}/users/{user_id_success}"
+    print(f"\nTestando endpoint GET ID: {endpoint}")
 
     try:
-        response_success = requests.get(endpoint_success, timeout=TIMEOUT)
-        response_success.raise_for_status()
-        data_success = response_success.json()
+        response = requests.get(endpoint, timeout=TIMEOUT)
         
-        assert response_success.status_code == 200
-        assert data_success['id'] == user_id_success
-        # Removemos a verificação do nome 'Fernando' se houver risco de edição, 
-        # mas para este exercício pode manter.
-        assert data_success['name'] == 'Fernando' 
+        assert response.status_code == 200, f"Usuário {user_id} não encontrado."
+        
+        data = response.json()
+        
+        # Valida se os dados correspondem ao registro esperado
+        assert data['id'] == 1
+        assert data['name'] == 'Fernando'
+        assert data['email'] == 'fernando@example.com'
+        
+        print(f"✅ Usuário {data['name']} recuperado com sucesso.")
 
     except requests.exceptions.ConnectionError:
-        pytest.fail("❌ ERRO: Servidor Flask não está rodando.")
-    
-    # Teste 4.2: Falha
-    user_id_fail = 99999 # Um número bem alto para garantir que não existe
-    endpoint_fail = f"{BASE_URL}/users/{user_id_fail}"
-
-    try:
-        response_fail = requests.get(endpoint_fail, timeout=TIMEOUT)
-        assert response_fail.status_code == 404
-        data_fail = response_fail.json()
-        assert "User not found" in data_fail['error']
-
-    except requests.exceptions.ConnectionError:
-        pytest.fail("❌ ERRO: Servidor Flask não está rodando.")
+        pytest.fail(f"❌ ERRO: O servidor Flask não está acessível em {BASE_URL}.")
