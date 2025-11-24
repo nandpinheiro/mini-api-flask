@@ -46,7 +46,7 @@ def test_02_exchange_usd_to_brl_integration():
     except requests.exceptions.HTTPError as e:
         pytest.fail(f"❌ Falha HTTP: {e.response.status_code}")
     except requests.exceptions.ConnectionError:
-        pytest.fail(f"❌ ERRO: Servidor Flask não está rodando.")
+        pytest.fail("❌ ERRO: Servidor Flask não está rodando.")
 
 # ... (imports existentes: requests, pytest, BASE_URL, TIMEOUT)
 
