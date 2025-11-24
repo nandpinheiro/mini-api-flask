@@ -1,0 +1,38 @@
+name: Build
+
+on:
+  push:
+    # Roda em todas as branches, exceto as que começam com 'release/'
+    branches:
+      - '**' 
+      - '!develop/**'
+      - '!release/**'
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches:
+      - main # O SonarCloud analisará a branch de feature no Pull Request para main
+jobs:
+  sonarqube:
+    name: SonarQube
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
+
+      - name: Run Tests and Generate Coverage Report
+        run: |
+          # 1. Instala as dependências do projeto
+          pip install -r requirements.txt  
+              
+          # 2. Instala as ferramentas de teste
+          pip install coverage pytest
+              
+          # 3. Executa os testes e gera o relatório XML
+          coverage run -m pytest       
+          coverage xml
+              
+      - name: SonarQube Scan
+        uses: SonarSource/sonarqube-scan-action@v6
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
